@@ -25,7 +25,7 @@ INCLUDES	:=	source source/fatfs
 #---------------------------------------------------------------------------------
 # THEME: if set to anything, name of the themes file folder inside resources
 #---------------------------------------------------------------------------------
-THEME	:=	
+THEME	:=	/H9UI
 
 #---------------------------------------------------------------------------------
 # options for code generation

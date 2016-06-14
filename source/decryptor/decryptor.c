@@ -22,7 +22,7 @@ u32 CryptBuffer(CryptBufferInfo *info)
     use_aeskey(info->keyslot);
 
     for (u32 i = 0; i < size; i += 0x10, buffer += 0x10) {
-        if (((mode & (0x7 << 27)) != AES_ECB_DECRYPT_MODE) || ((mode & (0x7 << 27)) != AES_ECB_ENCRYPT_MODE))
+        if (((mode & (0x7 << 27)) != AES_ECB_DECRYPT_MODE) && ((mode & (0x7 << 27)) != AES_ECB_ENCRYPT_MODE))
             set_ctr(ctr);
         if ((mode & (0x7 << 27)) == AES_CBC_DECRYPT_MODE)
             memcpy(ctr, buffer, 0x10);
@@ -36,37 +36,4 @@ u32 CryptBuffer(CryptBufferInfo *info)
     memcpy(info->ctr, ctr, 16);
     
     return 0;
-}
-
-u32 CreatePad(PadInfo *info)
-{
-    u8* buffer = BUFFER_ADDRESS;
-    u32 size_bytes = info->size_mb * 1024*1024;
-    u32 result = 0;
-    
-    if (!DebugCheckFreeSpace(size_bytes))
-        return 1;
-    
-    if (!FileCreate(info->filename, true)) // No DebugFileCreate() here - messages are already given
-        return 1;
-        
-    CryptBufferInfo decryptInfo = {.keyslot = info->keyslot, .setKeyY = info->setKeyY, .mode = info->mode, .buffer = buffer};
-    memcpy(decryptInfo.ctr, info->ctr, 16);
-    memcpy(decryptInfo.keyY, info->keyY, 16);
-    for (u32 i = 0; i < size_bytes; i += BUFFER_MAX_SIZE) {
-        u32 curr_block_size = min(BUFFER_MAX_SIZE, size_bytes - i);
-        decryptInfo.size = curr_block_size;
-        memset(buffer, 0x00, curr_block_size);
-        ShowProgress(i, size_bytes);
-        CryptBuffer(&decryptInfo);
-        if (!DebugFileWrite((void*)buffer, curr_block_size, i)) {
-            result = 1;
-            break;
-        }
-    }
-
-    ShowProgress(0, 0);
-    FileClose();
-
-    return result;
 }
